@@ -1,0 +1,81 @@
+node:
+  id: "id_01"
+  cluster: "cluster_01"
+admin:
+  access_log_path: /tmp/admin_access0.log
+  address:
+    socket_address:
+      protocol: TCP
+      address: 127.0.0.1
+      port_value: 8001
+static_resources:
+  listeners:
+  - name: listener
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8002
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        config:
+          idle_timeout: 1s
+          codec_type: auto
+          access_log:
+          - name: envoy.file_access_log
+            config:
+              path: "/usr/local/bin/envoy-access-0.log"
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: svid_echo_service
+          http_filters:
+          - name: envoy.ext_authz
+            config:
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: sds_server_uds
+          - name: envoy.router
+      tls_context:
+        common_tls_context:
+          tls_certificate_sds_secret_configs:
+          - name: server_cert
+            sds_config:
+              api_config_source:
+                api_type: GRPC
+                grpc_services:
+                  envoy_grpc:
+                    cluster_name: sds_server_uds
+          validation_context_sds_secret_config:
+            name: validation_context
+            sds_config:
+              api_config_source:
+                api_type: GRPC
+                grpc_services:
+                  envoy_grpc:
+                    cluster_name: sds_server_uds
+          tls_params:
+             ecdh_curves:
+               - X25519:P-256:P-521:P-384
+  clusters:
+  - name: sds_server_uds
+    connect_timeout: 0.25s
+    http2_protocol_options: {}
+    hosts:
+      - pipe:
+          path: /tmp/spiffe-envoy-agent.sock
+  - name: svid_echo_service
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: ROUND_ROBIN
+    hosts:
+      - socket_address:
+          address: 127.0.0.1
+          port_value: 3000
