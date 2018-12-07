@@ -1,5 +1,5 @@
 # spiffe-envoy-agent
-This component allows a user to integrate SPIFFE identity framework to Envoy proxy.
+This component allows a user to integrate Envoy proxy with the SPIFFE identity framework.
 
 ## How does this integration work?
 
@@ -16,30 +16,29 @@ This agent implements two services:
 
 ## Communication between components
 
-When spiffe-envoy-agent starts, it registers with both components: SPIRE agent and Envoy proxy. Agent communication is done using a [Workload API client](https://github.com/spiffe/spire/tree/master/api/workload) through UDS. On the other hand, Envoy communication is ruled by Envoy [xDS protocol](https://github.com/envoyproxy/data-plane-api/blob/master/XDS_PROTOCOL.md) which also uses UDS.
+When spiffe-envoy-agent starts, it registers itself with the above components: SPIRE agent and Envoy proxy. Agent communication is done using a [SPIFFE Workload API client](https://github.com/spiffe/spire/tree/master/api/workload) over a unix domain socket (or UDS). On the other hand, Envoy communication is ruled by Envoy [xDS protocol](https://github.com/envoyproxy/data-plane-api/blob/master/XDS_PROTOCOL.md) which also uses a UDS to communicate with spiffe-envoy-agent.
 
-### Transport layer: x509-SVID
+### Transport layer: X509-SVID
 
- For **x509-SVID** management, the spiffe-envoy-agent will work as a [secret discovery service](https://www.envoyproxy.io/docs/envoy/latest/configuration/secret#config-secret-discovery-service). A stream is created between it and SPIRE agent. SPIRE will update the stream with new SVIDs according to the configured settings.
+ For [x509-SVID](https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md) management, the spiffe-envoy-agent exposes a [secret discovery service](https://www.envoyproxy.io/docs/envoy/latest/configuration/secret#config-secret-discovery-service), or SDS. A stream is created between it and SPIRE agent using the SPIFFE Workload API. SPIRE updates the stream with new SVIDs according to the configured settings.
 
- At the same time, Envoy initiates the communication with a [discovery request](https://www.envoyproxy.io/docs/envoy/latest/api-v2/api/v2/discovery.proto#discoveryrequest) message. The spiffe-envoy-agent establishes a stream and sends back the previously fetched certificate and key in a [discovery response](https://www.envoyproxy.io/docs/envoy/latest/api-v2/api/v2/discovery.proto#discoveryresponse) message. After that, certificates will be updated in successive responses every time SPIRE rotates a new SVID. Once Envoy applies the configurations received, it is ready to handle TLS connections.
+ At the same time, Envoy initiates the SDS communication with a [discovery request](https://www.envoyproxy.io/docs/envoy/latest/api-v2/api/v2/discovery.proto#discoveryrequest) message. The spiffe-envoy-agent establishes a stream and sends Envoy the latest certificate and key in a [discovery response](https://www.envoyproxy.io/docs/envoy/latest/api-v2/api/v2/discovery.proto#discoveryresponse) message. Certificate updates are then communicated in successive responses every time SPIRE rotates the SVID. Once Envoy applies the configurations received, it is ready to handle TLS connections.
 
 ### Application layer: JWT-SVID
 
-On top of mTLS, HTTP requests can be done carrying a **JWT-SVID** for authentication. In this case, the spiffe-envoy-agent will work as an [external authorization filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/ext_authz_filter). There are two different cases to handle here.
+On top of mTLS, HTTP requests can be done carrying a [JWT-SVID](https://github.com/spiffe/spiffe/blob/master/standards/JWT-SVID.md) for authentication. In this case, the spiffe-envoy-agent works as an [external authorization filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/ext_authz_filter). There are two different cases to handle here.
 
 #### Forward spiffe-envoy-agent (Injection)
 
-Given an initial HTTP request sent to Envoy forward proxy, it will be handled by the Envoy External Authorization module. The module will forward the request header to spiffe-envoy-agent. It will query SPIRE agent to get a JWT-SVID for that request. When it gets the response, spiffe-envoy-agent will inject the JWT as a new header and will send it back to Envoy.
+Every HTTP request sent to the Envoy forward proxy is handled by the Envoy External Authorization module. This module forwards the request header to the configured spiffe-envoy-agent, which obtains a JWT-SVID for that request from the SPIRE agent. The JWT is then injected as a new header and sent back to Envoy.
 
 <p align="center">
 <img src=img/jwt-forward-flow.png align=center>
 </p>
 
-#### Backward spiffe-envoy-agent (Validation)
+#### Reverse spiffe-envoy-agent (Validation)
 
-When the HTTP request arrives at the backward proxy, it is processed by the Envoy External Authorization module and sent to the spiffe-envoy-agent for authorization. This time, it will verify the JWT-SVID. To do so, spiffe-envoy-agent will do an RPC to SPIRE agent to validate the token. If the JWT-SVID is valid and the subject claim is one of the configured to be accepted, then the request will be authorized and sent back to Envoy. Otherwise, it will be denied.
-Finally, Envoy will forward the validated and authorized request to the backend service.
+When the HTTP request arrives at the reverse proxy, it is processed by the Envoy External Authorization module and sent to the spiffe-envoy-agent for validation/authorization. This time, spiffe-envoy-agent verifies the JWT-SVID included in the HTTP header. To do so, it utilizes a validation endpoint exposed over the SPIFFE Workload API. Once validated, spiffe-envoy-agent verifies that the SPIFFE ID in the subject claim matches one of the configured SPIFFE IDs, at which point the request is authorized and sent back to Envoy. If validation fails, or the SPIFFE ID does not match, then the request will be denied. Finally, Envoy forwards the validated and authorized request to the backend service.
 
 <p align="center">
 <img src=img/jwt-backward-flow.png align=center>
@@ -73,4 +72,4 @@ GO111MODULE=on GOOS=linux go build
 ```
 
 ## Running spiffe-envoy-agent
-Sample configuration files are provided for [spiffe-envoy-agent](config-examples/spiffe-envoy-agent.conf) and for [forward](config-examples/frontend-envoy.yaml)/[backward](config-examples/backend-envoy.yaml) Envoy proxies. There is also a full demo scenario available [here](AddlinkToDemo).
+Sample configuration files are provided for [spiffe-envoy-agent](config-examples/spiffe-envoy-agent.conf) and for [forward](config-examples/frontend-envoy.yaml)/[reverse](config-examples/backend-envoy.yaml) Envoy proxies. There is also a full demo scenario available [here](AddlinkToDemo).
