@@ -1,0 +1,32 @@
+module github.com/spiffe/spiffe-envoy-agent
+
+require (
+	github.com/armon/go-radix v1.0.0
+	github.com/bgentry/speakeasy v0.1.0
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/envoyproxy/go-control-plane v0.6.1
+	github.com/fatih/color v1.7.0
+	github.com/gogo/googleapis v1.1.0
+	github.com/gogo/protobuf v1.1.1
+	github.com/golang/protobuf v1.2.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
+	github.com/hashicorp/errwrap v1.0.0
+	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/hcl v1.0.0
+	github.com/konsorten/go-windows-terminal-sequences v1.0.1
+	github.com/kr/pretty v0.1.0
+	github.com/lyft/protoc-gen-validate v0.0.8
+	github.com/mattn/go-colorable v0.0.9
+	github.com/mattn/go-isatty v0.0.4
+	github.com/mitchellh/cli v1.0.0
+	github.com/posener/complete v1.2.1
+	github.com/sirupsen/logrus v1.1.1
+	github.com/spiffe/spire v0.0.0-20181108190515-fff40b1f6d03
+	github.com/zeebo/errs v1.0.1
+	golang.org/x/crypto v0.0.0-20181029103014-dab2b1051b5d
+	golang.org/x/net v0.0.0-20181029044818-c44066c5c816
+	golang.org/x/sys v0.0.0-20181026203630-95b1ffbd15a5
+	golang.org/x/text v0.3.0
+	google.golang.org/genproto v0.0.0-20181029155118-b69ba1387ce2
+	google.golang.org/grpc v1.16.0
+)
