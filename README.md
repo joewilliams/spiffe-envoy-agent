@@ -72,4 +72,4 @@ GO111MODULE=on GOOS=linux go build
 ```
 
 ## Running spiffe-envoy-agent
-Sample configuration files are provided for [spiffe-envoy-agent](config-examples/spiffe-envoy-agent.conf) and for [forward](config-examples/frontend-envoy.yaml)/[reverse](config-examples/backend-envoy.yaml) Envoy proxies. There is also a full demo scenario available [here](AddlinkToDemo).
+Sample configuration files are provided for [spiffe-envoy-agent](config-examples/spiffe-envoy-agent.conf) and for [forward](config-examples/frontend-envoy.yaml)/[reverse](config-examples/backend-envoy.yaml) Envoy proxies. There is also a full demo scenario available [here](https://github.com/spiffe/spiffe-example/tree/master/spiffe-envoy-agent).
