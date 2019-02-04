@@ -47,7 +47,7 @@ func (c *dumpCommand) Run(args []string) int {
 
 	client := sds_v2.NewSecretDiscoveryServiceClient(conn)
 	resp, err := client.FetchSecrets(ctx, &envoy_v2.DiscoveryRequest{
-		ResourceNames: args,
+		ResourceNames: c.resourceNames,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
