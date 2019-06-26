@@ -1,3 +1,5 @@
+_**IMPORTANT NOTE**: If you are using SPIRE to issue SPIFFE identities, the SPIRE Agent supports the Envoy SDS API natively, and this component is not necessary. [Read more](https://blog.envoyproxy.io/using-spire-to-automatically-deliver-tls-certificates-to-envoy-for-stronger-authentication-be5606ac9c75) about how this works._
+
 # spiffe-envoy-agent
 This component allows a user to integrate Envoy proxy with the SPIFFE identity framework.
 
